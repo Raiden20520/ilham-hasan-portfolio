@@ -8,7 +8,7 @@ npx serve .
 ```
 
 ## Add a blog post or article
-Edit `content/posts.json` and add an object:
+`content/posts.json` is currently empty, so the Blog and Articles sections are hidden. Add an object and they appear automatically (a section shows only when it has at least one post of its type):
 
 ```json
 {
@@ -23,8 +23,5 @@ Edit `content/posts.json` and add an object:
 }
 ```
 
-## Add a YouTube video
-Edit `content/videos.json`. `id` accepts a full YouTube URL or the 11-character ID. The first entry is shown as the featured video. Videos only load when a visitor presses play (privacy-friendly `youtube-nocookie`).
-
 ## Deploy
-GitHub Pages: repo **Settings → Pages → Deploy from a branch → `main` / `(root)`**.
+Hosted on Vercel (static, no build). Pushing to `main` redeploys. GitHub Pages also serves the same branch.

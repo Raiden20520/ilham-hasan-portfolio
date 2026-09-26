@@ -1,8 +1,8 @@
-/* Data-driven sections: blog cards, article list, YouTube facades.
-   Content lives in content/posts.json and content/videos.json — edit those, not this file. */
+/* Data-driven sections: blog cards and article list.
+   Content lives in content/posts.json — edit that, not this file.
+   A section with no posts is removed from the page (and the nav) automatically. */
 (function () {
   var ARROW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
-  var PLAY = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
 
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
@@ -16,6 +16,11 @@
   function readTime(html) {
     var words = String(html || "").replace(/<[^>]+>/g, " ").trim().split(/\s+/).length;
     return Math.max(1, Math.round(words / 200)) + " min read";
+  }
+  function dropSection(id) {
+    var s = document.getElementById(id);
+    if (s) s.remove();
+    document.querySelectorAll('a[href="#' + id + '"]').forEach(function (a) { a.remove(); });
   }
   function getJSON(url) {
     return fetch(url, { cache: "no-cache" }).then(function (r) {
@@ -38,6 +43,7 @@
     var filters = document.getElementById("filters");
     if (!grid) return;
     var blog = posts.filter(function (p) { return p.type === "blog"; });
+    if (!blog.length) { dropSection("insights"); return; }
     var tags = ["All"].concat(blog.map(function (p) { return p.tag; }).filter(function (t, i, a) { return a.indexOf(t) === i; }));
 
     function draw(tag) {
@@ -71,6 +77,7 @@
     var el = document.getElementById("articleList");
     if (!el) return;
     var list = posts.filter(function (p) { return p.type === "article"; });
+    if (!list.length) { dropSection("articles"); return; }
     el.innerHTML = list.map(function (p) {
       return '<article class="article" data-reveal><div class="article-date">' + fmtDate(p.date) + "<small>" + readTime(p.body) + "</small></div>" +
         '<div><div class="meta"><span class="tag">' + esc(p.tag) + "</span>" + (p.draft ? '<span class="draft">DRAFT</span>' : "") + "</div>" +
@@ -79,37 +86,10 @@
     }).join("");
   }
 
-  /* ---------- YouTube ---------- */
-  function videoId(v) {
-    var s = String(v.id || v.url || "");
-    var m = s.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/) || s.match(/^([\w-]{11})$/);
-    return m ? m[1] : null;
-  }
-  function renderVideos(videos) {
-    var grid = document.getElementById("videoGrid");
-    if (!grid) return;
-    grid.innerHTML = videos.map(function (v, i) {
-      var id = videoId(v);
-      var frame = id
-        ? '<div class="video-frame" data-yt="' + id + '" style="background-image:url(https://i.ytimg.com/vi/' + id + '/hqdefault.jpg)"><button class="video-play" type="button" aria-label="Play video: ' + esc(v.title) + '"><i>' + PLAY + "</i></button></div>"
-        : '<div class="video-frame video-placeholder"><div><b>Your video goes here</b><small>Add a YouTube link in content/videos.json</small></div></div>';
-      return '<article class="video' + (i === 0 ? " is-featured" : "") + '" data-reveal>' + frame +
-        '<div class="video-info"><span class="tag">' + esc(v.tag || "Video") + "</span><h3>" + esc(v.title) + "</h3><p>" + esc(v.description || "") + "</p></div></article>";
-    }).join("");
-
-    grid.addEventListener("click", function (e) {
-      var btn = e.target.closest(".video-play");
-      if (!btn) return;
-      var frame = btn.parentElement;
-      var id = frame.getAttribute("data-yt");
-      frame.innerHTML = '<iframe src="https://www.youtube-nocookie.com/embed/' + id + '?autoplay=1&rel=0" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen></iframe>';
-    });
-  }
 
   window.Content = {
     esc: esc, fmtDate: fmtDate, readTime: readTime,
     loadPosts: function () { return getJSON("content/posts.json"); },
-    loadVideos: function () { return getJSON("content/videos.json"); },
-    renderBlog: renderBlog, renderArticles: renderArticles, renderVideos: renderVideos
+    renderBlog: renderBlog, renderArticles: renderArticles
   };
 })();
